@@ -133,7 +133,7 @@ window.onerror=function(m,s,l){var e=document.getElementById('err')||document.bo
 
 // ==LOGIC-START==
 // ---------- CONFIGURAÇÃO (fácil de alterar) ----------
-const CFG={W:5,D:5,H:12};
+const CFG={W:5,D:5,H:16};
 
 // Peças: coordenadas [x,y,z] em torno de um pivô
 const SHAPES={
@@ -428,7 +428,7 @@ function lockPiece(){
 }
 function finishClear(){
   const n=G.clear.ys.length,pts=SCORE_TABLE[Math.min(n,4)]+(n>4?(n-4)*500:0);
-  grid.removeLayers(G.clear.ys);G.layers+=n;G.score+=pts;G.level=1+Math.floor(G.layers/2);
+  grid.removeLayers(G.clear.ys);G.layers+=n;G.score+=pts;G.level=1+Math.floor(G.layers/3);
   toast('+'+pts+(n>1?'  ·  '+n+' CAMADAS':'  ·  CAMADA!'));
   G.clear=null;rebuildLocked();G.state='playing';spawn();updateHud();
 }
@@ -577,14 +577,14 @@ function update(dt,now){
     const sc=1+.28*k;flashMeshes.forEach(m=>m.scale.set(sc,sc,sc));
     if(G.clear.t>=380) finishClear();
   }else if(G.state==='playing'&&G.piece){
-    const p=G.piece,iv=G.soft?45:Math.max(90,850-(G.level-1)*65);
+    const p=G.piece,iv=G.soft?45:Math.max(110,1500-(G.level-1)*100);
     if(fits(grid,p,0,-1,0)){
       G.lockT=0;G.gravT+=dt;
       while(G.gravT>=iv){G.gravT-=iv;if(fits(grid,p,0,-1,0)){p.y--;if(G.soft) G.score++;}else break;}
       if(G.soft) updateHud();
     }else{
       G.gravT=0;G.lockT+=dt;
-      if(G.lockT>=(G.soft?110:450)){sfx.lock();lockPiece();}
+      if(G.lockT>=(G.soft?110:700)){sfx.lock();lockPiece();}
     }
   }
 }
