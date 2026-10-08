@@ -45,6 +45,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font-family:
 .pn p{margin:0 0 20px;font-size:11px;letter-spacing:3px;opacity:.7}
 .bt{display:block;width:100%;margin:10px 0;padding:14px;border-radius:10px;border:1.5px solid var(--cy);background:rgba(25,211,255,.1);color:#fff;font:700 15px ui-monospace,Menlo,monospace;letter-spacing:3px;touch-action:manipulation}
 .bt:active{background:rgba(25,211,255,.45)}
+.df{display:flex;gap:8px;margin:4px 0 6px}.df button{flex:1;padding:10px 4px;border-radius:10px;border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#cfefff;font:700 12px ui-monospace,Menlo,monospace;letter-spacing:1px;touch-action:manipulation}.df button.sel{border-color:var(--cy);background:rgba(25,211,255,.3);color:#fff}.dl{font-size:10px;letter-spacing:3px;opacity:.6;margin-top:14px}
 .bt.sec{border-color:rgba(255,255,255,.3);background:transparent;font-weight:400;opacity:.85}
 details{margin-top:12px;text-align:left;font-size:12px;line-height:1.7;opacity:.85}
 summary{cursor:pointer;text-align:center;letter-spacing:3px;padding:8px}
@@ -99,6 +100,8 @@ details b{color:var(--cy)}
     <h1>PROJECT T3D</h1>
     <p>CLASSIC CHALLENGE.<br>ONE MORE DIMENSION.</p>
     <button class="bt" id="bPlay">PLAY</button>
+    <div class="dl">DIFICULDADE</div>
+    <div class="df"><button data-d="easy" class="sel">FÁCIL</button><button data-d="normal">NORMAL</button><button data-d="hard">DIFÍCIL</button></div>
     <details>
       <summary>CONTROLES</summary>
       <b>Câmera:</b> arraste o dedo/mouse na tela (ou setas / analógico direito)<br>
@@ -133,7 +136,7 @@ window.onerror=function(m,s,l){var e=document.getElementById('err')||document.bo
 
 // ==LOGIC-START==
 // ---------- CONFIGURAÇÃO (fácil de alterar) ----------
-const CFG={W:5,D:5,H:16};
+const CFG={W:5,D:5,H:21};
 
 // Peças: coordenadas [x,y,z] em torno de um pivô
 const SHAPES={
@@ -143,7 +146,6 @@ const SHAPES={
   T:{c:0xb55cff,v:[[-1,0,0],[0,0,0],[1,0,0],[0,0,1]]},
   S:{c:0x3dff7a,v:[[-1,0,1],[0,0,1],[0,0,0],[1,0,0]]},
   A:{c:0xff4f6d,v:[[0,0,0],[1,0,0],[1,1,0],[1,1,1]]},   // parafuso (3D)
-  B:{c:0x4f7dff,v:[[0,0,0],[1,0,0],[1,1,0],[1,1,-1]]},  // parafuso espelhado (3D)
   Y:{c:0x2ee6c4,v:[[0,0,0],[1,0,0],[0,1,0],[0,0,1]]}    // tripé (3D)
 };
 
@@ -232,6 +234,8 @@ const $=id=>document.getElementById(id);
 const touch=matchMedia('(pointer:coarse)').matches||('ontouchstart' in window);
 document.body.classList.toggle('touch',touch);
 
+const DIFFS={easy:{base:2300,step:120,min:150,lock:1000},normal:{base:1500,step:100,min:110,lock:700},hard:{base:850,step:65,min:90,lock:450}};
+let diff='easy';
 const grid=new Grid(CFG.W,CFG.D,CFG.H);
 const G={state:'menu',score:0,layers:0,level:1,piece:null,next:null,bag:[],gravT:0,lockT:0,lockResets:0,soft:false,clear:null,lastOp:'-',shake:0};
 
@@ -551,6 +555,7 @@ function pollPad(){
 }
 
 // botões de menu
+document.querySelectorAll('.df button').forEach(b=>b.onclick=()=>{diff=b.dataset.d;document.querySelectorAll('.df button').forEach(x=>x.classList.toggle('sel',x===b));});
 $('bPlay').onclick=startGame;$('bAgain').onclick=startGame;
 $('bResume').onclick=togglePause;$('bQuit').onclick=toMenu;$('bMenu').onclick=toMenu;
 $('pauseBtn').onclick=()=>{audio.init();togglePause();};
@@ -577,14 +582,14 @@ function update(dt,now){
     const sc=1+.28*k;flashMeshes.forEach(m=>m.scale.set(sc,sc,sc));
     if(G.clear.t>=380) finishClear();
   }else if(G.state==='playing'&&G.piece){
-    const p=G.piece,iv=G.soft?45:Math.max(110,1500-(G.level-1)*100);
+    const p=G.piece,DF=DIFFS[diff],iv=G.soft?45:Math.max(DF.min,DF.base-(G.level-1)*DF.step);
     if(fits(grid,p,0,-1,0)){
       G.lockT=0;G.gravT+=dt;
       while(G.gravT>=iv){G.gravT-=iv;if(fits(grid,p,0,-1,0)){p.y--;if(G.soft) G.score++;}else break;}
       if(G.soft) updateHud();
     }else{
       G.gravT=0;G.lockT+=dt;
-      if(G.lockT>=(G.soft?110:700)){sfx.lock();lockPiece();}
+      if(G.lockT>=(G.soft?110:DF.lock)){sfx.lock();lockPiece();}
     }
   }
 }
