@@ -145,8 +145,8 @@ const SHAPES={
   L:{c:0xff8a1f,v:[[-1,0,0],[0,0,0],[1,0,0],[1,0,1]]},
   T:{c:0xb55cff,v:[[-1,0,0],[0,0,0],[1,0,0],[0,0,1]]},
   S:{c:0x3dff7a,v:[[-1,0,1],[0,0,1],[0,0,0],[1,0,0]]},
-  A:{c:0xff4f6d,v:[[0,0,0],[1,0,0],[1,1,0],[1,1,1]]},   // parafuso (3D)
-  Y:{c:0x2ee6c4,v:[[0,0,0],[1,0,0],[0,1,0],[0,0,1]]}    // tripé (3D)
+  Y:{c:0x2ee6c4,v:[[0,0,0],[1,0,0],[0,1,0],[0,0,1]]},   // tripé (3D)
+  B:{c:0x4f7dff,hardOnly:true,v:[[0,0,0],[1,0,0],[1,1,0],[1,1,-1]]}  // parafuso (3D) - só no modo DIFÍCIL
 };
 
 // rotação de 90° (dir +1 = regra da mão direita)
@@ -214,8 +214,8 @@ function makePiece(key,g){
   return {key,color:s.c,v,x,y:g.H-1-Math.max(...ys),z};
 }
 
-function makeBag(){
-  const k=Object.keys(SHAPES);
+function makeBag(hard){
+  const k=Object.keys(SHAPES).filter(n=>hard||!SHAPES[n].hardOnly);
   for(let i=k.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=k[i];k[i]=k[j];k[j]=t;}
   return k;
 }
@@ -437,7 +437,7 @@ function hardDrop(){
 }
 
 // ---------- fluxo do jogo ----------
-function drawBag(){if(!G.bag.length) G.bag=makeBag();return G.bag.pop();}
+function drawBag(){if(!G.bag.length) G.bag=makeBag(diff==='hard');return G.bag.pop();}
 function spawn(){
   G.piece=G.next||makePiece(drawBag(),grid);
   G.next=makePiece(drawBag(),grid);
